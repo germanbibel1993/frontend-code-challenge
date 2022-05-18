@@ -11,57 +11,97 @@ function randomDate() {
 }
 
 function randomPaymentStatus() {
-  return ['CURRENT', 'LATE'][Math.floor(Math.random() * 2)];
+  return ["CURRENT", "LATE"][Math.floor(Math.random() * 2)];
 }
 
-let tenants = [
+export let tenants = [
   {
     id: 1,
-    name: 'Fahad Ryder',
+    name: "Fahad Ryder",
     paymentStatus: randomPaymentStatus(),
-    leaseEndDate: randomDate()
+    leaseEndDate: randomDate(),
   },
   {
     id: 2,
-    name: 'Lucinda Busby',
+    name: "Lucinda Busby",
     paymentStatus: randomPaymentStatus(),
-    leaseEndDate: randomDate()
+    leaseEndDate: randomDate(),
   },
   {
     id: 3,
-    name: 'Ameen Hammond',
+    name: "Ameen Hammond",
     paymentStatus: randomPaymentStatus(),
-    leaseEndDate: randomDate()
+    leaseEndDate: randomDate(),
   },
   {
     id: 4,
-    name: 'Emrys Mcguire',
+    name: "Emrys Mcguire",
     paymentStatus: randomPaymentStatus(),
-    leaseEndDate: randomDate()
+    leaseEndDate: randomDate(),
   },
   {
     id: 5,
-    name: 'Tamar Robertson',
+    name: "Tamar Robertson",
     paymentStatus: randomPaymentStatus(),
-    leaseEndDate: randomDate()
-  }
+    leaseEndDate: randomDate(),
+  },
 ];
 
 const valid = (tenant) => {
-  return !!tenant.name && tenant.name.length <= 25 && !!tenant.paymentStatus && !!tenant.leaseEndDate;
-}
+  return (
+    !!tenant.name &&
+    tenant.name.length <= 25 &&
+    !!tenant.paymentStatus &&
+    !!tenant.leaseEndDate
+  );
+};
 
 let nextId = 6;
 
 const deleteTenant = (id) => {
-  tenants = tenants.filter(tenant => tenant.id !== id);
-}
+  tenants = tenants.filter((tenant) => tenant.id !== id);
+};
+
+const currentDate = new Date();
+const currentDateTime = currentDate.getTime();
+const last30DaysDate = new Date(
+  currentDate.setDate(currentDate.getDate() - 30)
+);
+const last30DaysDateTime = last30DaysDate.getTime();
+
+const last30DaysList = (list) => {
+  const response = list
+    .filter((x) => {
+      const elementDateTime = new Date(x.leaseEndDate).getTime();
+      if (
+        elementDateTime <= currentDateTime &&
+        elementDateTime > last30DaysDateTime
+      ) {
+        return true;
+      }
+      return false;
+    })
+    .sort((a, b) => {
+      return new Date(b.leaseEndDate) - new Date(a.leaseEndDate);
+    });
+  return response;
+};
 
 export const Service = {
-  getTenants: () => {
+  getTenants: (filter) => {
     return new Promise((resolve, reject) => {
       setTimeout(function () {
-        networkError() ? reject("Network Error!") : resolve([...tenants]);
+        networkError()
+          ? reject("Network Error!")
+          : resolve(() => {
+              if (filter === "late") {
+                return tenants.filter((t) => t.paymentStatus === "LATE");
+              } else if (filter === "30days") {
+                return last30DaysList(tenants);
+              } else {
+                return tenants;
+              }
+            });
       }, randomResponseTime());
     });
   },
@@ -76,7 +116,7 @@ export const Service = {
         } else {
           tenant.id = nextId++;
           tenants.push(tenant);
-          resolve({...tenant});
+          resolve({ ...tenant });
         }
       }, randomResponseTime());
     });
@@ -85,12 +125,12 @@ export const Service = {
     return new Promise((resolve, reject) => {
       setTimeout(function () {
         if (networkError()) {
-          reject("Network Error!")
+          reject("Network Error!");
         } else {
           deleteTenant(id);
-          resolve('OK')
+          resolve("OK");
         }
       }, randomResponseTime());
     });
-  }
-}
+  },
+};
